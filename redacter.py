@@ -1,9 +1,19 @@
+import copy
+
+
 def prepare_for_ai(clean_json):
-    # Create a copy so we don't mess up the original data needed for the UI
-    ai_payload = clean_json.copy()
-    
-    # Redact the sensitive fields
-    ai_payload["account_info"]["account_name"] = "REDACTED"
-    ai_payload["account_info"]["account_number"] = "REDACTED"
-    
+    """
+    Return a deep copy of the normalised statement with PII removed so it can
+    be safely sent to a third-party LLM. A shallow copy is NOT safe here —
+    nested dicts would still alias the original and leak PII.
+    """
+    ai_payload = copy.deepcopy(clean_json)
+
+    account_info = ai_payload.get("account_info")
+    if isinstance(account_info, dict):
+        if "account_name" in account_info:
+            account_info["account_name"] = "REDACTED"
+        if "account_number" in account_info:
+            account_info["account_number"] = "REDACTED"
+
     return ai_payload
